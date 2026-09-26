@@ -1,6 +1,16 @@
+import * as steam from "./lojas/steam.js";
+import * as nuuvem from "./lojas/nuuvem.js";
+import * as epic from "./lojas/epic.js";
+import * as playstation from "./lojas/playstation.js";
+import { formatarData, formatarReais } from "./lojas/comum.js";
+import { resumoGeral } from "./geral.js";
+
+// Lojas mostradas no popup, cada uma com a sua aba. Para adicionar uma: crie lojas/<loja>.js
+// (veja o padrão em lojas/nuuvem.js), importe o módulo aqui, coloque na lista e cadastre o site
+// em "optional_host_permissions" no manifest.json. A aba dela é criada sozinha.
+const LOJAS = [steam, nuuvem, epic, playstation];
+
 const $ = (seletor) => document.querySelector(seletor);
-const formatarReais = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const formatarData = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("pt-BR");
 
 // Atalho para criar um elemento com texto e classe. Usamos textContent (e não
 // innerHTML) porque o nome do jogo vem de fora e não deve ser tratado como HTML.
@@ -21,28 +31,28 @@ function criarCard(rotulo, valor, detalhe, largo) {
   return card;
 }
 
-function montarAnos(porAno) {
-  const anos = Object.keys(porAno).sort(); // do mais antigo para o mais recente
-  const liquidos = anos.map((ano) => porAno[ano].gasto - porAno[ano].reembolsado);
-  const maximo = Math.max(...liquidos, 1);
+// Gráfico de barras: uma linha por item, com rótulo, barra proporcional e valor.
+// "linhas" é uma lista de { rotulo, valor }.
+function montarBarras(linhas) {
+  const maximo = Math.max(...linhas.map((l) => l.valor), 1);
 
-  return anos.map((ano, i) => {
+  return linhas.map(({ rotulo, valor }) => {
     const barra = document.createElement("div");
-    barra.style.width = `${(Math.max(liquidos[i], 0) / maximo) * 100}%`;
+    barra.style.width = `${(Math.max(valor, 0) / maximo) * 100}%`;
 
     const trilho = document.createElement("div");
     trilho.className = "barra";
     trilho.append(barra);
 
     const li = document.createElement("li");
-    li.append(criar("span", ano), trilho, criar("span", formatarReais(liquidos[i])));
+    li.append(criar("span", rotulo), trilho, criar("span", formatarReais(valor)));
     return li;
   });
 }
 
-// Lista de todas as compras, da mais cara para a mais barata. Cada item: posição, nome,
-// data e preço. Todas as linhas têm o mesmo tamanho: o nome fica em uma linha só (o CSS
-// põe "…" no que não couber) e o texto completo aparece ao passar o mouse (title).
+// Lista de compras, da mais cara para a mais barata (serve para qualquer loja). Cada item:
+// posição, nome, data e preço. Todas as linhas têm o mesmo tamanho: o nome fica em uma linha
+// só (o CSS põe "…" no que não couber) e o texto completo aparece ao passar o mouse (title).
 function montarRanking(ranking) {
   return ranking.map((compra, i) => {
     const nome = criar("span", compra.itens || "—", "nome");
@@ -60,7 +70,7 @@ function montarRanking(ranking) {
     // Sem detalhe, usamos um espaço "invisível" (um espaço não-separável) para a linha manter a mesma altura.
     const info = document.createElement("div");
     info.className = "info";
-    info.append(nome, criar("span", detalhe || "\u00a0", "sub"));
+    info.append(nome, criar("span", detalhe || " ", "sub"));
 
     const li = document.createElement("li");
     li.append(criar("span", String(i + 1), "posicao"), info, criar("span", formatarReais(compra.valor), "preco"));
@@ -68,7 +78,194 @@ function montarRanking(ranking) {
   });
 }
 
-// Mostra o painel da aba escolhida e esconde o outro. Cada aba aponta para o seu painel
+// ---------------------------------------------------------------------------------------
+// Página de cada loja. Todas têm o mesmo formato, e o que mostrar vem do "estado" que o
+// módulo da loja devolve (veja lojas/comum.js):
+//   ativar   -> botão para o usuário liberar o acesso ao site da loja (uma única vez)
+//   mensagem -> um aviso (buscando, deslogado, erro, sem compras...)
+//   dados    -> total, dois cartões e a lista de compras
+// ---------------------------------------------------------------------------------------
+
+const permissaoNegada = new Set(); // lojas em que o usuário recusou a permissão nesta sessão do popup
+
+function criarPainelDaLoja(loja) {
+  const aba = criar("button", loja.nome);
+  aba.setAttribute("role", "tab");
+  aba.setAttribute("aria-selected", "false");
+  aba.dataset.aba = loja.id;
+  $(".abas").append(aba);
+
+  const partes = [];
+
+  // Só as lojas que exigem permissão (têm "origem") ganham o bloco de ativar.
+  if (loja.origem) {
+    const ativar = document.createElement("div");
+    ativar.dataset.parte = "ativar";
+    const botao = criar("button", `Ativar ${loja.nome}`, "botao");
+    botao.addEventListener("click", () => ativarLoja(loja));
+    ativar.append(
+      criar(
+        "p",
+        `Para mostrar seus gastos na ${loja.nome}, a extensão precisa ler os seus pedidos no site dela. Você só precisa liberar uma vez e pode desfazer quando quiser.`,
+        "mensagem"
+      ),
+      botao
+    );
+    partes.push(ativar);
+  }
+
+  const mensagem = criar("p", "", "mensagem");
+  mensagem.dataset.parte = "mensagem";
+  partes.push(mensagem);
+
+  // Bloco com os dados.
+  const dados = document.createElement("div");
+  dados.dataset.parte = "dados";
+  const total = document.createElement("div");
+  total.className = "total";
+  const valorTotal = criar("span", "");
+  valorTotal.dataset.parte = "total";
+  total.append(criar("small", `Total gasto na ${loja.nome}`), valorTotal);
+  const cards = document.createElement("div");
+  cards.className = "cards";
+  cards.dataset.parte = "cards";
+  const lista = document.createElement("ol");
+  lista.className = "lista-compras curta";
+  lista.dataset.parte = "lista";
+  const atualizado = criar("p", "", "nota");
+  atualizado.dataset.parte = "atualizado";
+  dados.append(total, cards, lista, atualizado);
+  partes.push(dados);
+
+  // Rodapé: link para a página de pedidos da própria loja e, nas lojas externas, o botão que
+  // busca os pedidos de novo agora (some enquanto a loja não foi ativada).
+  const rodape = document.createElement("p");
+  rodape.className = "nota rodape-loja";
+  if (loja.link) {
+    const link = document.createElement("a");
+    link.href = loja.link.url;
+    link.target = "_blank";
+    link.textContent = loja.link.texto;
+    rodape.append(link);
+  }
+  if (loja.origem) {
+    const atualizar = criar("button", "Atualizar", "botao-pequeno");
+    atualizar.dataset.parte = "atualizar";
+    atualizar.dataset.atualizar = "";
+    atualizar.addEventListener("click", () => atualizarLojas(loja.id));
+    rodape.append(atualizar);
+  }
+  partes.push(rodape);
+
+  const painel = document.createElement("div");
+  painel.id = `painel-${loja.id}`;
+  painel.hidden = true;
+  painel.append(...partes);
+  document.body.append(painel);
+}
+
+async function ativarLoja(loja) {
+  // O pedido de permissão precisa vir de um clique do usuário, por isso é a primeira coisa
+  // que acontece aqui. Quando ele libera, o background.js percebe (permissions.onAdded) e já
+  // começa a buscar os pedidos.
+  const concedida = await chrome.permissions.request({ origins: [loja.origem] });
+  if (concedida) permissaoNegada.delete(loja.id);
+  else permissaoNegada.add(loja.id);
+  carregar();
+}
+
+// Pede ao background.js para buscar agora: uma loja (id) ou todas (sem id). Enquanto espera,
+// todos os botões de atualizar ficam desligados. Quando os dados novos chegam, o popup se
+// redesenha sozinho (chrome.storage.onChanged); aqui só religamos os botões.
+async function atualizarLojas(id) {
+  const botoes = document.querySelectorAll("[data-atualizar], #atualizar-todas");
+  const textos = [...botoes].map((b) => b.textContent);
+  botoes.forEach((b) => {
+    b.disabled = true;
+    b.textContent = "Atualizando...";
+  });
+  try {
+    await chrome.runtime.sendMessage({ tipo: "sincronizar-lojas", loja: id });
+  } catch {
+    // o background não respondeu; o estado de cada loja mostra o que houver
+  }
+  botoes.forEach((b, i) => {
+    b.disabled = false;
+    b.textContent = textos[i];
+  });
+  carregar();
+}
+
+function mostrarLoja(loja, estado) {
+  const painel = $(`#painel-${loja.id}`);
+  const parte = (nome) => painel.querySelector(`[data-parte=${nome}]`);
+
+  const atualizar = parte("atualizar");
+  if (atualizar) atualizar.hidden = estado.tipo === "ativar";
+
+  const ativar = parte("ativar");
+  if (ativar) ativar.hidden = estado.tipo !== "ativar";
+
+  parte("mensagem").textContent = estado.mensagem ?? "";
+  parte("mensagem").hidden = !estado.mensagem;
+  parte("dados").hidden = estado.tipo !== "dados";
+  if (estado.tipo !== "dados") return;
+
+  const { total, compras, cartoes, avisos, atualizadoEm } = estado.dados;
+  parte("total").textContent = formatarReais(total);
+  parte("cards").replaceChildren(...cartoes.map((c) => criarCard(c.rotulo, c.valor, c.detalhe)));
+  parte("lista").replaceChildren(...montarRanking(compras));
+  parte("atualizado").textContent = ["Atualizado em " + new Date(atualizadoEm).toLocaleString("pt-BR"), ...avisos].join(" · ");
+}
+
+// ---------------------------------------------------------------------------------------
+// Resumo geral: junta as lojas que têm dados.
+// ---------------------------------------------------------------------------------------
+
+function mostrarResumoGeral(entradas) {
+  const comDados = entradas.filter((e) => e.estado.tipo === "dados");
+
+  const mensagem = $("#resumo-mensagem");
+  mensagem.textContent =
+    comDados.length === 0
+      ? "Ainda não há dados. Abra a loja da Steam (logado na sua conta) ou ative outra loja na aba dela."
+      : "";
+  mensagem.hidden = comDados.length > 0;
+  $("#resumo-conteudo").hidden = comDados.length === 0;
+  if (comDados.length === 0) return;
+
+  const geral = resumoGeral(comDados.map((e) => ({ loja: e.loja, dados: e.estado.dados })));
+
+  $("#liquido").textContent = formatarReais(geral.total);
+
+  const cards = [
+    criarCard("Compras", String(geral.quantidade), geral.primeiraData ? `desde ${formatarData(geral.primeiraData)}` : ""),
+    criarCard("Média por compra", formatarReais(geral.media)),
+  ];
+  if (geral.maior) {
+    const { itens, valor, data, loja } = geral.maior;
+    const detalhe = [formatarReais(valor), data && formatarData(data), loja].filter(Boolean).join(" · ");
+    cards.push(criarCard("Maior compra", itens || "—", detalhe, true));
+  }
+  $("#cards").replaceChildren(...cards);
+
+  // "Por loja" só faz sentido com mais de uma loja.
+  $("#lojas-titulo").hidden = geral.lojas.length < 2;
+  $("#lojas-barras").hidden = geral.lojas.length < 2;
+  $("#lojas-barras").replaceChildren(...montarBarras(geral.lojas.map((l) => ({ rotulo: l.nome, valor: l.total }))));
+
+  const anos = Object.keys(geral.porAno).sort(); // do mais antigo para o mais recente
+  $("#anos").replaceChildren(...montarBarras(anos.map((ano) => ({ rotulo: ano, valor: geral.porAno[ano] }))));
+
+  // Lojas que ainda não entraram na conta, e o que fazer.
+  const pendentes = entradas
+    .filter((e) => e.estado.tipo !== "dados")
+    .map((e) => `${e.loja.nome} (${e.estado.tipo === "ativar" ? "ative na aba dela" : "sem dados ainda"})`);
+  $("#pendentes").textContent = pendentes.length > 0 ? `Ainda não incluídas: ${pendentes.join(", ")}.` : "";
+  $("#pendentes").hidden = pendentes.length === 0;
+}
+
+// Mostra o painel da aba escolhida e esconde os outros. Cada aba aponta para o seu painel
 // pelo atributo data-aba ("resumo" -> #painel-resumo).
 function selecionarAba(nome) {
   document.querySelectorAll("[role=tab]").forEach((aba) => {
@@ -78,69 +275,38 @@ function selecionarAba(nome) {
   });
 }
 
-function mostrar(resumo) {
-  const ranking = resumo.ranking ?? [];
-
-  $("#liquido").textContent = formatarReais(resumo.gasto - resumo.reembolsado);
-
-  // Só criamos os cartões que têm informação para mostrar.
-  const cards = [];
-  if (resumo.compras > 0) {
-    cards.push(criarCard("Média por compra", formatarReais(resumo.gasto / resumo.compras)));
-  }
-  if (resumo.precoCheio > 0) {
-    const economia = resumo.precoCheio - resumo.precoPago;
-    const percentual = Math.round((economia / resumo.precoCheio) * 100);
-    cards.push(criarCard("Economia com descontos", formatarReais(economia), `${percentual}% do preço cheio`));
-  }
-  if (resumo.presentes > 0) {
-    cards.push(criarCard("Presentes que você deu", String(resumo.presentes), formatarReais(resumo.gastoPresentes)));
-  }
-  if (resumo.primeiraCompra) {
-    cards.push(criarCard("Primeira compra", formatarData(resumo.primeiraCompra)));
-  }
-  if (ranking.length > 0) {
-    // A maior compra é a primeira do ranking.
-    const { itens, valor, data } = ranking[0];
-    const detalhe = formatarReais(valor) + (data ? ` · ${formatarData(data)}` : "");
-    cards.push(criarCard("Maior compra", itens || "—", detalhe, true));
-  }
-  $("#cards").replaceChildren(...cards);
-
-  $("#anos").replaceChildren(...montarAnos(resumo.porAno));
-
-  $("#ranking").replaceChildren(...montarRanking(ranking));
-  $("#ranking-vazio").hidden = ranking.length > 0; // só aparece se a lista estiver vazia
-
-  const aviso = $("#aviso");
-  aviso.hidden = !(resumo.foraDeReais > 0);
-  aviso.textContent = `${resumo.foraDeReais} transação(ões) em outra moeda não foram somadas.`;
-
-  $("#rodape").textContent = "Atualizado em " + new Date(resumo.atualizadoEm).toLocaleString("pt-BR");
-}
-
 async function carregar() {
-  const { resumo } = await chrome.storage.local.get("resumo");
+  const armazenado = await chrome.storage.local.get(["resumo", "lojas"]);
 
-  // Três estados: sem dados ainda, conta em idioma que não entendemos, ou resumo normal.
-  const naoSuportado = !!resumo?.idiomaNaoSuportado;
-  $("#conteudo").hidden = !resumo || naoSuportado;
-  $("#vazio").hidden = !!resumo;
-  $("#nao-suportado").hidden = !naoSuportado;
-  if (resumo && !naoSuportado) {
-    mostrar(resumo);
-  } else {
-    $("#rodape").textContent = "";
+  const entradas = [];
+  for (const modulo of LOJAS) {
+    const { LOJA } = modulo;
+    // A Steam não pede permissão (não tem "origem"); as outras lojas, sim.
+    const permitido = LOJA.origem ? await chrome.permissions.contains({ origins: [LOJA.origem] }) : true;
+    const estado = modulo.estado(armazenado, permitido, permissaoNegada.has(LOJA.id));
+    mostrarLoja(LOJA, estado);
+    entradas.push({ loja: LOJA, estado });
   }
+  // "Atualizar todas" só faz sentido se alguma loja externa estiver ativada.
+  $("#atualizar-todas").hidden = !entradas.some((e) => e.loja.origem && e.estado.tipo !== "ativar");
+  mostrarResumoGeral(entradas);
 }
 
-document.querySelectorAll("[role=tab]").forEach((aba) => {
-  aba.addEventListener("click", () => selecionarAba(aba.dataset.aba));
+// As abas das lojas são criadas antes do primeiro carregar(). O clique nas abas usa delegação
+// (um único ouvinte no <nav>), que também vale para as abas criadas depois.
+LOJAS.forEach((modulo) => criarPainelDaLoja(modulo.LOJA));
+$("#atualizar-todas").addEventListener("click", () => atualizarLojas());
+$(".abas").addEventListener("click", (evento) => {
+  const aba = evento.target.closest("[role=tab]");
+  if (aba) selecionarAba(aba.dataset.aba);
 });
 
-// Se o resumo for atualizado com o popup aberto (por uma página da Steam), redesenha.
+// Se os dados mudarem com o popup aberto (por uma página da Steam ou pelo background.js),
+// ou se a permissão de uma loja mudar, redesenha.
 chrome.storage.onChanged.addListener((mudancas, area) => {
-  if (area === "local" && mudancas.resumo) carregar();
+  if (area === "local" && (mudancas.resumo || mudancas.lojas)) carregar();
 });
+chrome.permissions.onAdded.addListener(carregar);
+chrome.permissions.onRemoved.addListener(carregar);
 
 carregar();

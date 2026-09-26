@@ -2,20 +2,24 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Gastos para Steam</title>
+    <title>Gastos em Jogos</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <h1>Gastos para Steam</h1>
+    <h1>Gastos em Jogos</h1>
 
-    <section id="conteudo" hidden>
-      <!-- Abas: cada botão mostra o painel de mesmo nome (data-aba="resumo" -> #painel-resumo). -->
-      <nav class="abas" role="tablist">
-        <button role="tab" data-aba="resumo" aria-selected="true">Resumo</button>
-        <button role="tab" data-aba="ranking" aria-selected="false">Ranking</button>
-      </nav>
+    <!-- Abas: cada botão mostra o painel de mesmo nome (data-aba="resumo" -> #painel-resumo).
+         Só o Resumo (geral) é fixo. Uma aba e um painel por loja são criados pelo popup.js,
+         a partir da lista LOJAS. -->
+    <nav class="abas" role="tablist">
+      <button role="tab" data-aba="resumo" aria-selected="true">Resumo</button>
+    </nav>
 
-      <div id="painel-resumo">
+    <div id="painel-resumo">
+      <button id="atualizar-todas" class="botao-pequeno" hidden>Atualizar todas as lojas</button>
+      <p id="resumo-mensagem" class="mensagem" hidden></p>
+
+      <div id="resumo-conteudo" hidden>
         <div class="total">
           <small>Total gasto</small>
           <span id="liquido"></span>
@@ -23,38 +27,18 @@
 
         <div id="cards" class="cards"></div>
 
+        <h2 id="lojas-titulo">Por loja</h2>
+        <ul id="lojas-barras" class="barras lojas"></ul>
+
         <h2>Por ano</h2>
-        <ul id="anos"></ul>
+        <ul id="anos" class="barras"></ul>
 
-        <p id="aviso" class="aviso" hidden></p>
+        <p id="pendentes" class="nota" hidden></p>
       </div>
+    </div>
 
-      <div id="painel-ranking" hidden>
-        <ol id="ranking"></ol>
-        <p id="ranking-vazio" class="nota" hidden>
-          O ranking aparece depois da próxima atualização dos dados.
-        </p>
-      </div>
-    </section>
-
-    <p id="nao-suportado" hidden>
-      Não consegui entender o histórico de compras desta conta. A extensão só funciona com a
-      Steam em <strong>português do Brasil</strong> e valores em <strong>R$</strong>.
-    </p>
-
-    <p id="vazio" hidden>
-      Ainda não há dados. Eles são carregados sozinhos quando você navega na loja da Steam
-      (logado na sua conta). Você também pode abrir o histórico de compras para forçar o cálculo.
-    </p>
-
-    <footer>
-      <span id="rodape"></span>
-      <a id="abrir" href="https://store.steampowered.com/account/history/" target="_blank">
-        Abrir histórico
-      </a>
-    </footer>
-
-    <!-- No Manifest V3 o JS não pode ser escrito dentro do HTML: precisa ser um arquivo. -->
-    <script src="popup.js"></script>
+    <!-- No Manifest V3 o JS não pode ser escrito dentro do HTML: precisa ser um arquivo.
+         type="module" permite usar "import" (o popup importa o módulo de cada loja). -->
+    <script type="module" src="popup.js"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
-// Roda em qualquer página da loja e mantém o resumo de gastos atualizado sem você precisar
-// abrir o histórico de compras: baixa a página de histórico em segundo plano, calcula
-// e guarda. As funções de cálculo vêm do resumo.js, carregado antes.
+// Roda em qualquer página da loja da Steam e mantém o resumo de gastos atualizado sem você
+// precisar abrir o histórico de compras: baixa a página de histórico em segundo plano,
+// calcula e guarda. As funções de cálculo vêm do resumo.js, carregado antes.
 
 // Não atualiza mais de uma vez a cada 15 minutos, para não ficar pedindo a página à Steam
 // a cada clique.
@@ -25,6 +25,7 @@ async function atualizarEmSegundoPlano() {
     "ultimaTentativa",
     "resumo",
   ]);
+
   // Um resumo de outra versão (guardado por uma versão antiga da extensão) não serve: trata
   // como se não existisse, para refazer logo.
   const resumoValido = resumoAtual?.versao === VERSAO_RESUMO;

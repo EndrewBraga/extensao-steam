@@ -4,7 +4,7 @@
 #
 # Descobre sozinho quais arquivos entram: le o manifest.json (icones, popup, scripts) e o
 # popup.html (css e js). Assim nao entra nada a mais (.git, docs, *.md, tools) e nao falta nada.
-# O .zip sai em dist\gastos-para-steam-<versao>.zip.
+# O .zip sai em dist\gastos-em-jogos-<versao>.zip.
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
@@ -25,6 +25,28 @@ foreach ($grupo in $manifest.content_scripts) { foreach ($js in $grupo.js) { $ar
 $html = Get-Content (Join-Path $raiz $manifest.action.default_popup) -Raw -Encoding UTF8
 foreach ($m in [regex]::Matches($html, '(?:href|src)="([^"#:]+\.(?:css|js))"')) { $arquivos.Add($m.Groups[1].Value) }
 
+# service worker (background) e os modulos que qualquer .js importa ("import ... from './x.js'").
+# Segue os imports de forma recursiva, para nao esquecer nenhum modulo (por exemplo lojas/*.js).
+if ($manifest.background.service_worker) { $arquivos.Add($manifest.background.service_worker) }
+$raizCompleta = [System.IO.Path]::GetFullPath($raiz)
+$fila = New-Object System.Collections.Generic.Queue[string]
+$vistos = @{}
+foreach ($a in @($arquivos | Where-Object { $_ -like '*.js' })) { $fila.Enqueue(($a -replace '\\', '/')) }
+while ($fila.Count -gt 0) {
+  $atual = $fila.Dequeue()
+  if ($vistos.ContainsKey($atual)) { continue }
+  $vistos[$atual] = $true
+  $caminhoAtual = Join-Path $raiz $atual
+  if (-not (Test-Path $caminhoAtual)) { continue }
+  $fonte = Get-Content $caminhoAtual -Raw -Encoding UTF8
+  foreach ($m in [regex]::Matches($fonte, '(?m)^\s*(?:import|export)\s[^;]*?from\s+"(\.[^"]+)"')) {
+    $alvo = [System.IO.Path]::GetFullPath((Join-Path (Split-Path $caminhoAtual -Parent) $m.Groups[1].Value))
+    $relativo = ($alvo.Substring($raizCompleta.Length).TrimStart('\', '/')) -replace '\\', '/'
+    $arquivos.Add($relativo)
+    $fila.Enqueue($relativo)
+  }
+}
+
 $arquivos = $arquivos | ForEach-Object { $_ -replace '\\', '/' } | Sort-Object -Unique
 
 # 2) confere que todos existem
@@ -34,7 +56,7 @@ if ($faltando) { throw "Arquivos citados no manifest/popup que nao existem: $($f
 # 3) monta o zip
 $pasta = Join-Path $raiz 'dist'
 New-Item -ItemType Directory -Force -Path $pasta | Out-Null
-$destino = Join-Path $pasta ("gastos-para-steam-{0}.zip" -f $manifest.version)
+$destino = Join-Path $pasta ("gastos-em-jogos-{0}.zip" -f $manifest.version)
 if (Test-Path $destino) { Remove-Item $destino -Force }
 
 $zip = [System.IO.Compression.ZipFile]::Open($destino, [System.IO.Compression.ZipArchiveMode]::Create)

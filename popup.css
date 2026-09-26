@@ -12,7 +12,12 @@
   --alerta: #e0b03d;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
+  position: relative;
   width: 360px;
   margin: 0;
   padding: 14px;
@@ -100,7 +105,7 @@ h2 {
   color: var(--texto-suave);
 }
 
-/* Abas Resumo | Ranking. */
+/* Abas: o Resumo geral e uma por loja. */
 .abas {
   display: flex;
   gap: 4px;
@@ -109,7 +114,7 @@ h2 {
 }
 
 .abas button {
-  padding: 6px 12px;
+  padding: 6px 10px;
   border: 0;
   border-bottom: 2px solid transparent;
   background: none;
@@ -134,15 +139,25 @@ ol {
   list-style: none;
 }
 
-/* Gráfico de barras por ano: ano | barra | valor. A lista rola se tiver muitos anos. */
+/* Gráficos de barras (por loja e por ano): rótulo | barra | valor. As listas rolam se ficarem grandes. */
+.barras {
+  --rotulo: 34px; /* largura da coluna do rótulo */
+}
+
+.barras.lojas {
+  --rotulo: 64px;
+  max-height: 88px;
+  overflow-y: auto;
+}
+
 #anos {
   max-height: 132px;
   overflow-y: auto;
 }
 
-#anos li {
+.barras li {
   display: grid;
-  grid-template-columns: 34px 1fr 78px;
+  grid-template-columns: var(--rotulo) 1fr 78px;
   align-items: center;
   gap: 8px;
   margin: 3px 0;
@@ -160,19 +175,25 @@ ol {
   border-radius: 2px;
 }
 
-#anos li span:last-child {
+.barras li span:last-child {
   text-align: right;
   color: var(--branco);
 }
 
 /* Ranking: posição | nome e detalhe | preço. A lista tem altura máxima e rola sozinha,
    porque o Chrome limita os popups a uns 600px de altura. */
-#ranking {
+.lista-compras {
   max-height: 440px;
   overflow-y: auto;
 }
 
-#ranking li {
+/* Na aba de uma loja a lista divide o espaço com o total e os cartões, então é mais curta. */
+.lista-compras.curta {
+  max-height: 280px;
+  margin-top: 8px;
+}
+
+.lista-compras li {
   display: grid;
   grid-template-columns: 26px 1fr auto;
   align-items: center;
@@ -187,7 +208,7 @@ ol {
 }
 
 /* O primeiro lugar ganha um destaque discreto. */
-#ranking li:first-child {
+.lista-compras li:first-child {
   border-left-color: var(--azul);
 }
 
@@ -229,27 +250,61 @@ ol {
   color: var(--texto-suave);
 }
 
-.aviso {
-  margin: 12px 0 0;
-  font-size: 12px;
-  color: var(--alerta);
-}
-
-#vazio {
+.mensagem {
   margin: 0;
   line-height: 1.5;
 }
 
-footer {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--destaque);
+/* Botão de ação (por exemplo, "Ativar Nuuvem"). */
+.botao {
+  margin-top: 12px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--azul);
+  font: inherit;
+  font-weight: bold;
+  color: #0d1520;
+  cursor: pointer;
+}
+
+.botao:hover {
+  background: var(--branco);
+}
+
+/* Botão pequeno de "Atualizar", com só o contorno. */
+.botao-pequeno {
+  padding: 4px 10px;
+  border: 1px solid var(--destaque);
+  border-radius: 3px;
+  background: none;
+  font: inherit;
   font-size: 11px;
   color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.botao-pequeno:hover:not(:disabled) {
+  border-color: var(--azul);
+  color: var(--branco);
+}
+
+.botao-pequeno:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Fica na linha do título (no canto), para não aumentar a altura do popup. */
+#atualizar-todas {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+}
+
+.rodape-loja {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 a {

@@ -1,11 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "Gastos para Steam",
-  "version": "0.7.0",
-  "description": "Mostra o preço dos jogos e um resumo dos seus gastos na loja da Steam. Não afiliada à Valve.",
+  "name": "Gastos em Jogos",
+  "version": "0.12.0",
+  "description": "Veja quanto você gastou em jogos, somando suas lojas, direto no navegador. Não é afiliada a nenhuma loja.",
   "permissions": [
-    "storage"
+    "storage",
+    "alarms"
   ],
+  "optional_host_permissions": [
+    "https://secure.nuuvem.com/*",
+    "https://accounts.epicgames.com/*",
+    "https://web.np.playstation.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "icons": {
     "16": "icons/icone16.png",
     "32": "icons/icone32.png",
@@ -13,7 +23,7 @@
     "128": "icons/icone128.png"
   },
   "action": {
-    "default_title": "Gastos para Steam",
+    "default_title": "Gastos em Jogos",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icone16.png",

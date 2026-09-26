@@ -29,7 +29,7 @@ async function carregarTudo() {
 }
 
 const banner = document.createElement("div");
-banner.textContent = "Gastos para Steam: calculando o resumo...";
+banner.textContent = "Gastos em Jogos: calculando o resumo...";
 banner.style.background = "#1b2838";
 banner.style.color = "#66c0f4";
 banner.style.padding = "10px";
@@ -46,11 +46,11 @@ carregarTudo().then(() => {
     .set({ resumo: { ...r, atualizadoEm: new Date().toISOString() }, ultimaTentativa: Date.now() })
     .then(() => {
       banner.textContent = r.idiomaNaoSuportado
-        ? "Gastos para Steam: não reconheci o histórico desta conta. A extensão só entende a Steam em português do Brasil, com valores em R$."
-        : "Gastos para Steam: resumo atualizado. Clique no ícone da extensão para ver seus gastos.";
+        ? "Gastos em Jogos: não reconheci o histórico desta conta. A extensão só entende a Steam em português do Brasil, com valores em R$."
+        : "Gastos em Jogos: resumo atualizado. Clique no ícone da extensão para ver seus gastos.";
     })
     .catch((erro) => {
       console.error("Não consegui salvar o resumo:", erro);
-      banner.textContent = "Gastos para Steam: não consegui salvar o resumo.";
+      banner.textContent = "Gastos em Jogos: não consegui salvar o resumo.";
     });
 });
