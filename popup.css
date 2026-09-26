@@ -1,0 +1,262 @@
+/* Cores em um lugar só: para mudar o tema, basta mexer aqui. */
+:root {
+  color-scheme: dark; /* barras de rolagem e controles nativos no tema escuro */
+  --fundo: #1b2838;
+  --card: #22364a;
+  --destaque: #2a475e;
+  --azul: #66c0f4;
+  --texto: #c7d5e0;
+  --texto-suave: #8f98a0;
+  --branco: #fff;
+  --trilho: #16202d;
+  --alerta: #e0b03d;
+}
+
+body {
+  width: 360px;
+  margin: 0;
+  padding: 14px;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--azul);
+}
+
+h2 {
+  margin: 14px 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+/* Bloco principal: o total em destaque e a conta que chega nele. */
+.total {
+  padding: 10px 14px;
+  background: var(--destaque);
+  border-radius: 4px;
+}
+
+.total small {
+  display: block;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.total span {
+  display: block;
+  margin: 2px 0 4px;
+  font-size: 30px;
+  font-weight: bold;
+  line-height: 1.1;
+  color: var(--branco);
+}
+
+/* Cartões em duas colunas. Todos têm a mesma estrutura (rótulo, valor, detalhe),
+   então o alinhamento e a altura ficam previsíveis. */
+.cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--card);
+  border-radius: 4px;
+}
+
+.card.largo {
+  grid-column: 1 / -1; /* ocupa as duas colunas */
+}
+
+.rotulo {
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+.valor {
+  font-size: 16px;
+  color: var(--branco);
+}
+
+.card.largo .valor {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+/* Abas Resumo | Ranking. */
+.abas {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--destaque);
+}
+
+.abas button {
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  color: var(--texto-suave);
+  cursor: pointer;
+}
+
+.abas button:hover {
+  color: var(--branco);
+}
+
+.abas button[aria-selected="true"] {
+  border-bottom-color: var(--azul);
+  color: var(--branco);
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Gráfico de barras por ano: ano | barra | valor. A lista rola se tiver muitos anos. */
+#anos {
+  max-height: 132px;
+  overflow-y: auto;
+}
+
+#anos li {
+  display: grid;
+  grid-template-columns: 34px 1fr 78px;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0;
+}
+
+.barra {
+  height: 10px;
+  background: var(--trilho);
+  border-radius: 2px;
+}
+
+.barra div {
+  height: 100%;
+  background: var(--azul);
+  border-radius: 2px;
+}
+
+#anos li span:last-child {
+  text-align: right;
+  color: var(--branco);
+}
+
+/* Ranking: posição | nome e detalhe | preço. A lista tem altura máxima e rola sozinha,
+   porque o Chrome limita os popups a uns 600px de altura. */
+#ranking {
+  max-height: 440px;
+  overflow-y: auto;
+}
+
+#ranking li {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 46px; /* altura fixa: todas as linhas ficam do mesmo tamanho */
+  padding: 0 10px;
+  margin-bottom: 3px;
+  background: var(--card);
+  border-left: 3px solid transparent; /* todos têm a borda, para o alinhamento ficar igual */
+  border-radius: 4px;
+}
+
+/* O primeiro lugar ganha um destaque discreto. */
+#ranking li:first-child {
+  border-left-color: var(--azul);
+}
+
+.posicao {
+  font-weight: bold;
+  color: var(--azul);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Nome em uma linha só: o que não couber vira "…" (o texto completo está no title). */
+.nome {
+  line-height: 1.3;
+  color: var(--branco);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info .sub {
+  white-space: nowrap;
+}
+
+.preco {
+  font-weight: bold;
+  color: var(--branco);
+  white-space: nowrap;
+}
+
+.nota {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--texto-suave);
+}
+
+.aviso {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--alerta);
+}
+
+#vazio {
+  margin: 0;
+  line-height: 1.5;
+}
+
+footer {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--destaque);
+  font-size: 11px;
+  color: var(--texto-suave);
+}
+
+a {
+  color: var(--azul);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--branco);
+}

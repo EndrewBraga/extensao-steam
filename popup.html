@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gastos na Steam</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <h1>Gastos na Steam</h1>
+
+    <section id="conteudo" hidden>
+      <!-- Abas: cada botão mostra o painel de mesmo nome (data-aba="resumo" -> #painel-resumo). -->
+      <nav class="abas" role="tablist">
+        <button role="tab" data-aba="resumo" aria-selected="true">Resumo</button>
+        <button role="tab" data-aba="ranking" aria-selected="false">Ranking</button>
+      </nav>
+
+      <div id="painel-resumo">
+        <div class="total">
+          <small>Total gasto</small>
+          <span id="liquido"></span>
+        </div>
+
+        <div id="cards" class="cards"></div>
+
+        <h2>Por ano</h2>
+        <ul id="anos"></ul>
+
+        <p id="aviso" class="aviso" hidden></p>
+      </div>
+
+      <div id="painel-ranking" hidden>
+        <ol id="ranking"></ol>
+        <p id="ranking-vazio" class="nota" hidden>
+          O ranking aparece depois da próxima atualização dos dados.
+        </p>
+      </div>
+    </section>
+
+    <p id="vazio" hidden>
+      Ainda não há dados. Eles são carregados sozinhos quando você navega na loja da Steam
+      (logado na sua conta). Você também pode abrir o histórico de compras para forçar o cálculo.
+    </p>
+
+    <footer>
+      <span id="rodape"></span>
+      <a id="abrir" href="https://store.steampowered.com/account/history/" target="_blank">
+        Abrir histórico
+      </a>
+    </footer>
+
+    <!-- No Manifest V3 o JS não pode ser escrito dentro do HTML: precisa ser um arquivo. -->
+    <script src="popup.js"></script>
+  </body>
+</html>
