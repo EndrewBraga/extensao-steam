@@ -7,7 +7,13 @@ Checklist e textos prontos para o painel do desenvolvedor. Os nomes dos campos m
 - [ ] Conta de desenvolvedor criada (há uma taxa única de registro) e verificação em duas etapas ativa.
 - [ ] Política de privacidade acessível por uma **URL pública**. Sugestão: o `PRIVACIDADE.md` deste repositório, com o repositório público.
 - [ ] Ícone de 128 px (já existe em `icons/`), ao menos 1 captura de tela (1280x800 ou 640x400) e a descrição abaixo.
-- [ ] Pacote: um `.zip` com os arquivos da extensão na raiz (`manifest.json`, `*.js`, `popup.*`, `icons/`), **sem** `.git`, `docs/` nem `*.md`.
+- [ ] Pacote: um `.zip` com os arquivos da extensão na raiz (`manifest.json`, `*.js`, `popup.*`, `icons/`), **sem** `.git`, `docs/` nem `*.md`. Para gerar, na pasta do projeto:
+
+  ```bash
+  powershell -ExecutionPolicy Bypass -File tools/empacotar.ps1
+  ```
+
+  O arquivo sai em `dist/gastos-para-steam-<versão>.zip`. O script lê o `manifest.json` e o `popup.html` para escolher os arquivos e usa a versão do manifest no nome. **Aumente a `version` do `manifest.json` antes de enviar uma atualização**, porque a loja recusa uma versão igual à publicada.
 - [ ] Publicar primeiro como **"Não listada"** para testar com poucas pessoas.
 
 ## Identidade
