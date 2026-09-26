@@ -1,9 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Extensão Steam",
-  "version": "0.6.0",
-  "description": "Mostra o preço dos jogos da Steam e o total gasto na sua conta.",
-  "permissions": ["storage"],
+  "name": "Gastos para Steam",
+  "version": "0.7.0",
+  "description": "Mostra o preço dos jogos e um resumo dos seus gastos na loja da Steam. Não afiliada à Valve.",
+  "permissions": [
+    "storage"
+  ],
   "icons": {
     "16": "icons/icone16.png",
     "32": "icons/icone32.png",
@@ -11,7 +13,7 @@
     "128": "icons/icone128.png"
   },
   "action": {
-    "default_title": "Gastos na Steam",
+    "default_title": "Gastos para Steam",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icone16.png",
@@ -20,12 +22,22 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://store.steampowered.com/*"],
-      "js": ["resumo.js", "content.js", "atualizar.js"]
+      "matches": [
+        "https://store.steampowered.com/*"
+      ],
+      "js": [
+        "resumo.js",
+        "content.js",
+        "atualizar.js"
+      ]
     },
     {
-      "matches": ["https://store.steampowered.com/account/history/*"],
-      "js": ["gastos.js"]
+      "matches": [
+        "https://store.steampowered.com/account/history/*"
+      ],
+      "js": [
+        "gastos.js"
+      ]
     }
   ]
 }

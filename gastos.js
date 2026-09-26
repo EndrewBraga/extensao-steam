@@ -1,6 +1,10 @@
-// Roda só na página de histórico de compras (/account/history/): soma o que você gastou,
-// mostra o total em um banner e guarda o resumo para o popup exibir.
-// As funções de cálculo (calcular, formatarReais...) vêm do resumo.js, carregado antes.
+// Roda só na página de histórico de compras (/account/history/): calcula o resumo dos seus
+// gastos e o guarda para o popup exibir.
+// As funções de cálculo (calcular...) vêm do resumo.js, carregado antes.
+//
+// Privacidade: os valores NUNCA são escritos na página. Tudo que fica no DOM aqui é texto
+// sem valores, porque os scripts da própria Steam (e de outras extensões) conseguem ler a
+// página. Os números aparecem só no popup da extensão.
 
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const contarLinhas = () => document.querySelectorAll(".wallet_table_row").length;
@@ -25,7 +29,7 @@ async function carregarTudo() {
 }
 
 const banner = document.createElement("div");
-banner.textContent = "Calculando o total gasto...";
+banner.textContent = "Gastos para Steam: calculando o resumo...";
 banner.style.background = "#1b2838";
 banner.style.color = "#66c0f4";
 banner.style.padding = "10px";
@@ -35,25 +39,18 @@ document.body.prepend(banner);
 
 carregarTudo().then(() => {
   const r = calcular(document);
-  const liquido = r.gasto - r.reembolsado;
-
-  let texto =
-    `Total gasto: ${formatarReais(liquido)} ` +
-    `(${r.compras} compras: ${formatarReais(r.gasto)}` +
-    ` − ${r.reembolsos} reembolso(s): ${formatarReais(r.reembolsado)})`;
-  if (r.foraDeReais > 0) {
-    texto += ` — ${r.foraDeReais} transação(ões) em outra moeda não foram somadas`;
-  }
-  banner.textContent = texto;
-  console.log("Gastos:", r);
 
   // Guarda o resumo para o popup. O storage é do Chrome, no seu computador.
   // ultimaTentativa avisa o atualizar.js de que os dados acabaram de ser renovados.
   chrome.storage.local
     .set({ resumo: { ...r, atualizadoEm: new Date().toISOString() }, ultimaTentativa: Date.now() })
-    .then(() => { banner.textContent += " · salvo para o popup"; })
+    .then(() => {
+      banner.textContent = r.idiomaNaoSuportado
+        ? "Gastos para Steam: não reconheci o histórico desta conta. A extensão só entende a Steam em português do Brasil, com valores em R$."
+        : "Gastos para Steam: resumo atualizado. Clique no ícone da extensão para ver seus gastos.";
+    })
     .catch((erro) => {
       console.error("Não consegui salvar o resumo:", erro);
-      banner.textContent += " · erro ao salvar para o popup";
+      banner.textContent = "Gastos para Steam: não consegui salvar o resumo.";
     });
 });

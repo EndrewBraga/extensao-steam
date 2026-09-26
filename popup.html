@@ -2,11 +2,11 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Gastos na Steam</title>
+    <title>Gastos para Steam</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <h1>Gastos na Steam</h1>
+    <h1>Gastos para Steam</h1>
 
     <section id="conteudo" hidden>
       <!-- Abas: cada botão mostra o painel de mesmo nome (data-aba="resumo" -> #painel-resumo). -->
@@ -36,6 +36,11 @@
         </p>
       </div>
     </section>
+
+    <p id="nao-suportado" hidden>
+      Não consegui entender o histórico de compras desta conta. A extensão só funciona com a
+      Steam em <strong>português do Brasil</strong> e valores em <strong>R$</strong>.
+    </p>
 
     <p id="vazio" hidden>
       Ainda não há dados. Eles são carregados sozinhos quando você navega na loja da Steam

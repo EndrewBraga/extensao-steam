@@ -69,7 +69,11 @@ async function atualizarEmSegundoPlano() {
 
   const resumo = { ...calcular(doc), atualizadoEm: new Date().toISOString() };
   await chrome.storage.local.set({ resumo });
-  registrarStatus(`atualizado em ${resumo.atualizadoEm}`);
+  registrarStatus(
+    resumo.idiomaNaoSuportado
+      ? "idioma da conta não suportado (só português do Brasil)"
+      : `atualizado em ${resumo.atualizadoEm}`
+  );
 }
 
 atualizarEmSegundoPlano().catch((erro) => {

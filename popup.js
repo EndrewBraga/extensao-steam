@@ -122,9 +122,12 @@ function mostrar(resumo) {
 async function carregar() {
   const { resumo } = await chrome.storage.local.get("resumo");
 
-  $("#conteudo").hidden = !resumo;
+  // Três estados: sem dados ainda, conta em idioma que não entendemos, ou resumo normal.
+  const naoSuportado = !!resumo?.idiomaNaoSuportado;
+  $("#conteudo").hidden = !resumo || naoSuportado;
   $("#vazio").hidden = !!resumo;
-  if (resumo) {
+  $("#nao-suportado").hidden = !naoSuportado;
+  if (resumo && !naoSuportado) {
     mostrar(resumo);
   } else {
     $("#rodape").textContent = "";

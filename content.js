@@ -1,5 +1,3 @@
-console.log("Extensão Steam carregada!");
-
 // Só age em páginas de jogo (URL do tipo /app/620/Portal_2/).
 if (location.pathname.startsWith("/app/")) {
   // Nome do jogo e bloco de compra do JOGO em si. A página também tem blocos de
@@ -21,8 +19,6 @@ if (location.pathname.startsWith("/app/")) {
     const nome = nomeEl.textContent.trim();
     const preco = precoFinalEl ? precoFinalEl.textContent.trim() : "preço não encontrado";
     const desconto = descontoEl ? ` (${descontoEl.textContent.trim()})` : "";
-
-    console.log("Jogo:", nome, "| Preço:", preco, desconto);
 
     const banner = document.createElement("div");
     banner.textContent = `${nome}: ${preco}${desconto}`;

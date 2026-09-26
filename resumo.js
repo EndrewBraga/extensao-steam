@@ -4,7 +4,7 @@
 
 // Versão do formato do resumo guardado. Sempre que os campos mudarem, aumente este número:
 // o atualizar.js vê que o resumo antigo é de outra versão e o refaz logo.
-const VERSAO_RESUMO = 4;
+const VERSAO_RESUMO = 5;
 
 // Converte "R$ 1.234,56" em 1234.56. Texto sem número vira 0.
 function textoParaNumero(texto) {
@@ -12,7 +12,6 @@ function textoParaNumero(texto) {
   return isNaN(numero) ? 0 : numero;
 }
 
-const formatarReais = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const limparEspacos = (texto) => texto.replace(/\s+/g, " ").trim();
 
 // A Steam escreve o mês abreviado em português, com ponto: "25/jan./2026".
@@ -70,8 +69,12 @@ function calcular(doc) {
     primeiraCompra: null,             // "aaaa-mm-dd"
     porAno: {},                       // { 2025: { gasto, reembolsado } }
     foraDeReais: 0,
+    // true quando a tabela tem linhas mas nenhuma é de um tipo que entendemos: a conta está
+    // em outro idioma. Melhor avisar do que mostrar totais errados.
+    idiomaNaoSuportado: false,
   };
 
+  let linhasReconhecidas = 0;
   const comprasValidas = []; // compras não reembolsadas, para montar o ranking no final
   const linhas = [...doc.querySelectorAll(".wallet_table_row")];
   const tipoDe = (linha) => limparEspacos(linha.querySelector(".wht_type")?.textContent ?? "");
@@ -95,6 +98,9 @@ function calcular(doc) {
     // e depósitos na carteira não são gasto na loja, então ficam de fora.
     const ehCompra = tipo.startsWith("Compra");
     const ehReembolso = tipo.startsWith("Reembolso");
+    // Contamos os tipos que conhecemos (inclui o Mercado da Comunidade, que ignoramos de
+    // propósito) só para saber se o idioma da conta é o que entendemos.
+    if (ehCompra || ehReembolso || tipo.includes("Mercado")) linhasReconhecidas++;
     if (!ehCompra && !ehReembolso) return;
 
     if (!/\d/.test(total)) return; // itens grátis não têm valor
@@ -153,6 +159,8 @@ function calcular(doc) {
 
   // Da mais cara para a mais barata.
   r.ranking = comprasValidas.sort((a, b) => b.valor - a.valor);
+
+  r.idiomaNaoSuportado = linhas.length > 0 && linhasReconhecidas === 0;
 
   return r;
 }
