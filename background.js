@@ -13,8 +13,9 @@
 import * as nuuvem from "./lojas/nuuvem.js";
 import * as epic from "./lojas/epic.js";
 import * as playstation from "./lojas/playstation.js";
+import * as xbox from "./lojas/xbox.js";
 
-const LOJAS = [nuuvem, epic, playstation];
+const LOJAS = [nuuvem, epic, playstation, xbox];
 
 const ALARME = "sincronizar-lojas";
 const PERIODO_EM_MINUTOS = 15;

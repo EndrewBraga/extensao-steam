@@ -108,13 +108,15 @@ h2 {
 /* Abas: o Resumo geral e uma por loja. */
 .abas {
   display: flex;
-  gap: 4px;
+  gap: 0;
   margin-bottom: 8px;
   border-bottom: 1px solid var(--destaque);
 }
 
 .abas button {
-  padding: 6px 10px;
+  flex: 1 1 auto;
+  padding: 6px 5px;
+  font-size: 12px;
   border: 0;
   border-bottom: 2px solid transparent;
   background: none;

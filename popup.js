@@ -2,13 +2,14 @@ import * as steam from "./lojas/steam.js";
 import * as nuuvem from "./lojas/nuuvem.js";
 import * as epic from "./lojas/epic.js";
 import * as playstation from "./lojas/playstation.js";
+import * as xbox from "./lojas/xbox.js";
 import { formatarData, formatarReais } from "./lojas/comum.js";
 import { resumoGeral } from "./geral.js";
 
 // Lojas mostradas no popup, cada uma com a sua aba. Para adicionar uma: crie lojas/<loja>.js
 // (veja o padrão em lojas/nuuvem.js), importe o módulo aqui, coloque na lista e cadastre o site
 // em "optional_host_permissions" no manifest.json. A aba dela é criada sozinha.
-const LOJAS = [steam, nuuvem, epic, playstation];
+const LOJAS = [steam, nuuvem, epic, playstation, xbox];
 
 const $ = (seletor) => document.querySelector(seletor);
 
@@ -63,6 +64,7 @@ function montarRanking(ranking) {
     const detalhe = [
       compra.data && formatarData(compra.data),
       compra.presente && "presente",
+      compra.assinatura && "assinatura",
       compra.quantidade > 1 && `${compra.quantidade} itens`,
     ]
       .filter(Boolean)

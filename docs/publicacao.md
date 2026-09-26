@@ -31,7 +31,7 @@ Checklist e textos prontos para o painel do desenvolvedor. Os nomes dos campos m
 > - Mostra um aviso com o nome e o preço do jogo nas páginas da loja.
 > - Calcula o total gasto na sua conta, já descontando reembolsos.
 > - Mostra um resumo geral do que você gastou (total, média por compra, maior compra, gasto por loja e por ano).
-> - Tem uma página para cada loja, com a lista das suas compras da mais cara para a mais barata. Hoje: Steam, Nuuvem, Epic Games e PlayStation Store (as três últimas são opcionais e você ativa no popup).
+> - Tem uma página para cada loja, com a lista das suas compras da mais cara para a mais barata. Hoje: Steam, Nuuvem, Epic Games, PlayStation Store e Xbox (as quatro últimas são opcionais e você ativa no popup).
 > - Mostra a economia com descontos e os presentes que você deu na Steam.
 >
 > **Privacidade**
@@ -40,7 +40,7 @@ Checklist e textos prontos para o painel do desenvolvedor. Os nomes dos campos m
 > **Limitações**
 > Funciona apenas com a Steam em português do Brasil e valores em R$. Se a Steam mudar o layout da página, alguns recursos podem parar de funcionar.
 >
-> *Esta extensão não é afiliada, endossada ou patrocinada por nenhuma das lojas citadas. Steam (Valve), Nuuvem, Epic Games, PlayStation e demais nomes são marcas dos seus donos.*
+> *Esta extensão não é afiliada, endossada ou patrocinada por nenhuma das lojas citadas. Steam (Valve), Nuuvem, Epic Games, PlayStation, Xbox (Microsoft) e demais nomes são marcas dos seus donos.*
 
 ## Finalidade única
 
@@ -50,8 +50,8 @@ Mostrar o preço dos jogos e um resumo dos gastos do usuário na loja da Steam.
 
 - **`storage`**: guardar localmente o resumo calculado (totais e lista de compras) para exibir no popup.
 - **Acesso a `https://store.steampowered.com/*`**: ler o preço exibido nas páginas de jogos e o histórico de compras do próprio usuário (`/account/history/`). Não é usado em nenhum outro site.
-- **`alarms`**: acordar a extensão a cada 15 minutos para atualizar, em segundo plano, as lojas que o usuário ativou e cujo intervalo (30 minutos na Nuuvem, 6 horas na Epic e na PlayStation) já passou.
-- **Acesso opcional a `https://secure.nuuvem.com/*`, `https://accounts.epicgames.com/*` e `https://web.np.playstation.com/*`** (`optional_host_permissions`): ler os pedidos e compras do próprio usuário na Nuuvem, na Epic Games e na PlayStation Store. Cada acesso é pedido só quando o usuário ativa a loja no popup e pode ser retirado a qualquer momento. Não são usados em nenhum outro site.
+- **`alarms`**: acordar a extensão a cada 15 minutos para atualizar, em segundo plano, as lojas que o usuário ativou e cujo intervalo (30 minutos na Nuuvem, 6 horas na Epic, na PlayStation e no Xbox) já passou.
+- **Acesso opcional a `https://secure.nuuvem.com/*`, `https://accounts.epicgames.com/*` e `https://web.np.playstation.com/*` e `https://account.microsoft.com/*`** (`optional_host_permissions`): ler os pedidos e compras do próprio usuário na Nuuvem, na Epic Games, na PlayStation Store e na conta Microsoft (Xbox). Cada acesso é pedido só quando o usuário ativa a loja no popup e pode ser retirado a qualquer momento. Não são usados em nenhum outro site.
 - **Código remoto**: nenhum. Todo o código está dentro do pacote.
 
 ## Práticas de privacidade (aba do painel)

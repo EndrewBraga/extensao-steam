@@ -2,7 +2,7 @@
 
 Extensão do Chrome (Manifest V3) que mostra o preço dos jogos na loja da Steam e um resumo dos gastos da sua conta. Nasceu como projeto de estudo sobre como criar extensões.
 
-> Não é afiliada, endossada ou patrocinada por nenhuma das lojas citadas. Steam (Valve), Nuuvem, Epic Games, PlayStation Store e demais nomes são marcas dos seus donos.
+> Não é afiliada, endossada ou patrocinada por nenhuma das lojas citadas. Steam (Valve), Nuuvem, Epic Games, PlayStation Store, Xbox (Microsoft) e demais nomes são marcas dos seus donos.
 
 ## O que faz
 
@@ -10,7 +10,7 @@ Extensão do Chrome (Manifest V3) que mostra o preço dos jogos na loja da Steam
 - **Resumo geral** (popup da extensão): total gasto somando todas as lojas, compras, média por compra, maior compra, e o gasto por loja e por ano.
 - **Uma página por loja**, com total, dois cartões e a lista de todas as compras, da mais cara para a mais barata. Na Steam: economia com descontos e presentes que você deu, com os reembolsos já descontados.
 - **Atualização automática**: o resumo da Steam se atualiza sozinho enquanto você navega na loja, sem precisar abrir o histórico.
-- **Outras lojas**: hoje a **Nuuvem**, a **Epic Games** e a **PlayStation Store** (a Epic e a PlayStation mostram também quantos jogos grátis você resgatou). Cada loja é opcional: você ativa no popup (uma vez, o Chrome pede permissão) e a extensão passa a atualizar sozinha (a Nuuvem a cada 30 minutos, a Epic e a PlayStation a cada 6 horas). O botão **Atualizar** (em cada loja) e o **Atualizar todas as lojas** (no Resumo) buscam na hora.
+- **Outras lojas**: hoje a **Nuuvem**, a **Epic Games** (compras e assinatura Clube Fortnite) a **PlayStation Store** e o **Xbox** (compras e Game Pass da conta Microsoft) (a Epic e a PlayStation mostram também quantos jogos grátis você resgatou). Cada loja é opcional: você ativa no popup (uma vez, o Chrome pede permissão) e a extensão passa a atualizar sozinha (a Nuuvem a cada 30 minutos, a Epic, a PlayStation e o Xbox a cada 6 horas). O botão **Atualizar** (em cada loja) e o **Atualizar todas as lojas** (no Resumo) buscam na hora.
 
 Tudo roda no seu navegador. Nada é enviado para servidores. Veja a [Política de Privacidade](PRIVACIDADE.md).
 
