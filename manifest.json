@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gastos em Jogos",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "description": "Veja quanto você gastou em jogos, somando suas lojas, direto no navegador. Não é afiliada a nenhuma loja.",
   "permissions": [
     "storage",
