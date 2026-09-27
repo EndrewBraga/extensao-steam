@@ -20,6 +20,15 @@ export function primeiraData(compras) {
   return compras.reduce((menor, c) => (c.data && (!menor || c.data < menor) ? c.data : menor), null);
 }
 
+// Os dois cartões que TODA loja mostra, iguais em todas as abas: quantas compras (e desde quando)
+// e a média por compra.
+export function cartoesPadrao(compras, total, primeira) {
+  return [
+    { rotulo: "Compras", valor: String(compras.length), detalhe: primeira ? `desde ${formatarData(primeira)}` : undefined },
+    { rotulo: "Média por compra", valor: formatarReais(compras.length > 0 ? total / compras.length : 0) },
+  ];
+}
+
 // O que a página de uma loja deve mostrar. Cada loja devolve um "estado" com uma destas formas:
 //   { tipo: "ativar",   mensagem }   falta o usuário liberar o acesso ao site da loja
 //   { tipo: "mensagem", mensagem }   não há o que listar (ainda buscando, deslogado, erro, vazio)
@@ -27,7 +36,7 @@ export function primeiraData(compras) {
 //
 // Formato de "dados" (é o que o popup e o resumo geral entendem, para qualquer loja):
 //   { total, compras: [{ itens, quantidade, valor, data, presente? }], porAno: { "2024": valor },
-//     primeiraData, cartoes: [{ rotulo, valor, detalhe? }], avisos: [texto], atualizadoEm }
+//     primeiraData, cartoes: cartoesPadrao(...), avisos: [texto], atualizadoEm }
 
 // Estado de uma loja "externa" (que exige permissão e é atualizada pelo background.js).
 // "dados" é o que o background guardou em chrome.storage.local.lojas.<id>; "normalizar" é a

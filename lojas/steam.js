@@ -3,7 +3,7 @@
 // background.js nem permissão opcional: quem lê as páginas dela são o gastos.js e o atualizar.js,
 // que rodam dentro da própria loja.
 
-import { formatarReais } from "./comum.js";
+import { cartoesPadrao } from "./comum.js";
 
 export const LOJA = {
   id: "steam",
@@ -24,26 +24,12 @@ export function normalizar(resumo) {
   const porAno = {};
   for (const [ano, v] of Object.entries(resumo.porAno ?? {})) porAno[ano] = v.gasto - v.reembolsado;
 
-  // Até dois cartões, do mais específico da Steam para o mais geral.
-  const candidatos = [];
-  if (resumo.precoCheio > 0) {
-    const economia = resumo.precoCheio - resumo.precoPago;
-    const percentual = Math.round((economia / resumo.precoCheio) * 100);
-    candidatos.push({ rotulo: "Economia com descontos", valor: formatarReais(economia), detalhe: `${percentual}% do preço cheio` });
-  }
-  if (resumo.presentes > 0) {
-    candidatos.push({ rotulo: "Presentes que você deu", valor: String(resumo.presentes), detalhe: formatarReais(resumo.gastoPresentes) });
-  }
-  if (compras.length > 0) {
-    candidatos.push({ rotulo: "Média por compra", valor: formatarReais(total / compras.length) });
-  }
-
   return {
     total,
     compras,
     porAno,
     primeiraData: resumo.primeiraCompra ?? null,
-    cartoes: candidatos.slice(0, 2),
+    cartoes: cartoesPadrao(compras, total, resumo.primeiraCompra ?? null),
     avisos: resumo.foraDeReais > 0 ? [`${resumo.foraDeReais} transação(ões) em outra moeda não foram somadas`] : [],
     atualizadoEm: resumo.atualizadoEm,
   };

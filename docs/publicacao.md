@@ -32,7 +32,7 @@ Checklist e textos prontos para o painel do desenvolvedor. Os nomes dos campos m
 > - Calcula o total gasto na sua conta, já descontando reembolsos.
 > - Mostra um resumo geral do que você gastou (total, média por compra, maior compra, gasto por loja e por ano).
 > - Tem uma página para cada loja, com a lista das suas compras da mais cara para a mais barata. Hoje: Steam, Nuuvem, Epic Games, PlayStation Store e Xbox (as quatro últimas são opcionais e você ativa no popup).
-> - Mostra a economia com descontos e os presentes que você deu na Steam.
+> - Na Steam, os reembolsos já vêm descontados do total.
 >
 > **Privacidade**
 > Tudo é calculado no seu navegador. Nenhum dado é enviado para servidores, e não há anúncios nem rastreamento. Nomes de quem recebeu seus presentes não são guardados.

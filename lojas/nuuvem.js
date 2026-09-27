@@ -11,7 +11,7 @@
 //   - estado(armazenado, permitido, negada): (usado pelo popup) diz o que a página da loja mostra
 // Os formatos que o popup entende estão descritos em lojas/comum.js.
 
-import { estadoDeLojaExterna, formatarReais, primeiraData, totalPorAno } from "./comum.js";
+import { cartoesPadrao, estadoDeLojaExterna, primeiraData, totalPorAno } from "./comum.js";
 
 export const VERSAO_NUUVEM = 1;
 
@@ -125,10 +125,7 @@ export function normalizar(dados) {
     compras,
     porAno: totalPorAno(compras),
     primeiraData: primeiraData(compras),
-    cartoes: [
-      { rotulo: "Pedidos", valor: String(compras.length) },
-      { rotulo: "Média por pedido", valor: formatarReais(total / compras.length) },
-    ],
+    cartoes: cartoesPadrao(compras, total, primeiraData(compras)),
     avisos: naoContados.length > 0 ? [`não contados: ${naoContados.join(" e ")}`] : [],
     atualizadoEm: dados.atualizadoEm,
   };

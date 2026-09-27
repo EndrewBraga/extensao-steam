@@ -222,11 +222,11 @@ function mostrarLoja(loja, estado) {
   parte("dados").hidden = estado.tipo !== "dados";
   if (estado.tipo !== "dados") return;
 
-  const { total, compras, cartoes, avisos, atualizadoEm } = estado.dados;
+  const { total, compras, cartoes, atualizadoEm } = estado.dados;
   parte("total").textContent = formatarReais(total);
   parte("cards").replaceChildren(...cartoes.map((c) => criarCard(c.rotulo, c.valor, c.detalhe)));
   parte("lista").replaceChildren(...montarRanking(compras));
-  parte("atualizado").textContent = ["Atualizado em " + new Date(atualizadoEm).toLocaleString("pt-BR"), ...avisos].join(" · ");
+  parte("atualizado").textContent = "Atualizado em " + new Date(atualizadoEm).toLocaleString("pt-BR");
 }
 
 // ---------------------------------------------------------------------------------------

@@ -17,7 +17,7 @@
 //   - O pedido traz o endereço de entrega, o cartão e o número do pedido: NADA disso é guardado.
 //   - Assinaturas (Game Pass) aparecem com itemTypeName "Subscription".
 
-import { estadoDeLojaExterna, formatarReais, primeiraData, totalPorAno } from "./comum.js";
+import { cartoesPadrao, estadoDeLojaExterna, primeiraData, totalPorAno } from "./comum.js";
 
 export const VERSAO_XBOX = 1;
 
@@ -151,7 +151,7 @@ export async function sincronizar(buscar = fetch) {
 
 // Põe os dados guardados no formato que o popup entende (veja lojas/comum.js).
 export function normalizar(dados) {
-  const { compras, total, gratuitas = 0, reembolsadas = 0, canceladas = 0, naoContadas = 0, foraDeReais = 0 } = dados;
+  const { compras, total, reembolsadas = 0, canceladas = 0, naoContadas = 0, foraDeReais = 0 } = dados;
 
   const avisos = [];
   const plural = (n, singular, pluralTexto) => `${n} ${n === 1 ? singular : pluralTexto}`;
@@ -160,20 +160,12 @@ export function normalizar(dados) {
   if (foraDeReais > 0) avisos.push(`${foraDeReais} em outra moeda não ${foraDeReais === 1 ? "somado" : "somados"}`);
   if (naoContadas > 0) avisos.push(`${naoContadas} de tipo desconhecido não ${naoContadas === 1 ? "contado" : "contados"}`);
 
-  const assinaturas = compras.filter((c) => c.assinatura);
-  const totalAssinaturas = assinaturas.reduce((soma, c) => soma + c.valor, 0);
-
   return {
     total,
     compras,
     porAno: totalPorAno(compras),
     primeiraData: primeiraData(compras),
-    cartoes: [
-      { rotulo: "Compras pagas", valor: String(compras.length), detalhe: `média de ${formatarReais(total / compras.length)}` },
-      assinaturas.length > 0
-        ? { rotulo: "Assinaturas (Game Pass...)", valor: formatarReais(totalAssinaturas), detalhe: plural(assinaturas.length, "cobrança", "cobranças") }
-        : { rotulo: "Grátis ou resgatados", valor: String(gratuitas) },
-    ],
+    cartoes: cartoesPadrao(compras, total, primeiraData(compras)),
     avisos,
     atualizadoEm: dados.atualizadoEm,
   };

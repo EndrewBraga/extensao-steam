@@ -8,7 +8,7 @@ Extensão do Chrome (Manifest V3) que mostra o preço dos jogos na loja da Steam
 
 - **Preço do jogo**: aviso no topo das páginas de jogos (trata jogo gratuito, em promoção e conjuntos).
 - **Resumo geral** (popup da extensão): total gasto somando todas as lojas, compras, média por compra, maior compra, e o gasto por loja e por ano.
-- **Uma página por loja**, com total, dois cartões e a lista de todas as compras, da mais cara para a mais barata. Na Steam: economia com descontos e presentes que você deu, com os reembolsos já descontados.
+- **Uma página por loja**, com o total, os mesmos dois cartões em todas as lojas (número de compras e média por compra) e a lista de todas as compras, da mais cara para a mais barata. Na Steam os reembolsos já vêm descontados.
 - **Atualização automática**: o resumo da Steam se atualiza sozinho enquanto você navega na loja, sem precisar abrir o histórico.
 - **Outras lojas**: hoje a **Nuuvem**, a **Epic Games** (compras e assinatura Clube Fortnite) a **PlayStation Store** e o **Xbox** (compras e Game Pass da conta Microsoft) (a Epic e a PlayStation mostram também quantos jogos grátis você resgatou). Cada loja é opcional: você ativa no popup (uma vez, o Chrome pede permissão) e a extensão passa a atualizar sozinha (a Nuuvem a cada 30 minutos, a Epic, a PlayStation e o Xbox a cada 6 horas). O botão **Atualizar** (no canto de cima: em cada loja, ou **Atualizar todas as lojas** no Resumo) abre a página da loja em segundo plano, espera carregar (a loja renova a sessão), busca os pedidos e fecha a aba; se você não estiver logado, a aba fica aberta para você entrar. Na Steam ele abre o histórico de compras, que recalcula o resumo na hora.
 

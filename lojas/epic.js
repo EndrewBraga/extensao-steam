@@ -12,7 +12,7 @@
 //     (account/v2/subscription/orders), com o mesmo formato de pedido mais o campo "orderStatus".
 //     Só entram as cobranças COMPLETED; as que falharam (CANCELED) não foram pagas.
 
-import { estadoDeLojaExterna, formatarReais, primeiraData, totalPorAno } from "./comum.js";
+import { cartoesPadrao, estadoDeLojaExterna, primeiraData, totalPorAno } from "./comum.js";
 
 export const VERSAO_EPIC = 2;
 
@@ -211,7 +211,7 @@ export async function sincronizar(buscar = fetch) {
 
 // Põe os dados guardados no formato que o popup entende (veja lojas/comum.js).
 export function normalizar(dados) {
-  const { compras, total, gratuitas = 0, reembolsadas = 0, naoContadas = 0, foraDeReais = 0, naoConcluidas = 0, assinaturasIndisponiveis = false } = dados;
+  const { compras, total, reembolsadas = 0, naoContadas = 0, foraDeReais = 0, naoConcluidas = 0, assinaturasIndisponiveis = false } = dados;
 
   const avisos = [];
   if (reembolsadas > 0) avisos.push(`${reembolsadas} ${reembolsadas === 1 ? "reembolsada não contada" : "reembolsadas não contadas"}`);
@@ -225,10 +225,7 @@ export function normalizar(dados) {
     compras,
     porAno: totalPorAno(compras),
     primeiraData: primeiraData(compras),
-    cartoes: [
-      { rotulo: "Compras pagas", valor: String(compras.length), detalhe: `média de ${formatarReais(total / compras.length)}` },
-      { rotulo: "Jogos grátis resgatados", valor: String(gratuitas) },
-    ],
+    cartoes: cartoesPadrao(compras, total, primeiraData(compras)),
     avisos,
     atualizadoEm: dados.atualizadoEm,
   };
