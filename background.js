@@ -12,14 +12,21 @@
 
 import * as nuuvem from "./lojas/nuuvem.js";
 import * as epic from "./lojas/epic.js";
+import * as steam from "./lojas/steam.js";
 import * as playstation from "./lojas/playstation.js";
 import * as xbox from "./lojas/xbox.js";
 
 const LOJAS = [nuuvem, epic, playstation, xbox];
+// Lojas que NÃO são buscadas pelo background: quem lê os dados são scripts que rodam dentro das
+// páginas delas (a Steam). O background só abre a página, espera e fecha (botão "Atualizar").
+const LOJAS_DE_PAGINA = [steam];
 
 const ALARME = "sincronizar-lojas";
 const PERIODO_EM_MINUTOS = 15;
 const INTERVALO_APOS_FALHA_EM_MINUTOS = 15;
+const ESPERA_DA_PAGINA_EM_MS = 30000; // quanto esperamos a página da loja carregar, no máximo
+const FOLGA_APOS_CARREGAR_EM_MS = 3000; // a loja renova a sessão logo depois de carregar
+const ESPERA_DA_STEAM_EM_MS = 120000; // o histórico da Steam pode ter várias telas de "Carregar mais"
 
 const temPermissao = (loja) => chrome.permissions.contains({ origins: [loja.LOJA.origem] });
 
@@ -98,6 +105,142 @@ async function executarSincronizacao(forcar, so) {
   }
 }
 
+// ---------------------------------------------------------------------------------------
+// Botão "Atualizar" do popup: antes de buscar, abre a página da loja em uma aba de fundo, espera
+// carregar (é aí que a loja renova a sessão do usuário) e fecha a aba. Se mesmo assim a loja
+// disser que o usuário não está logado, a aba fica aberta e vai para a frente, para ele entrar.
+// ---------------------------------------------------------------------------------------
+
+const dorme = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
+
+// Espera a aba terminar de carregar (ou o tempo máximo passar). O evento traz o "status" mesmo
+// sem a permissão "tabs", que só é necessária para ler o endereço e o título das abas.
+function esperarCarregar(idDaAba) {
+  return new Promise((resolver) => {
+    const terminar = () => {
+      chrome.tabs.onUpdated.removeListener(ouvinte);
+      clearTimeout(limite);
+      resolver();
+    };
+    const ouvinte = (id, mudancas) => {
+      if (id === idDaAba && mudancas.status === "complete") terminar();
+    };
+    const limite = setTimeout(terminar, ESPERA_DA_PAGINA_EM_MS);
+    chrome.tabs.onUpdated.addListener(ouvinte);
+    chrome.tabs.get(idDaAba).then((aba) => aba.status === "complete" && terminar(), terminar);
+  });
+}
+
+// Abre a página da loja em segundo plano e espera. Devolve o id da aba, ou null se não deu.
+async function abrirLojaEmSegundoPlano(loja) {
+  try {
+    const aba = await chrome.tabs.create({ url: loja.LOJA.link.url, active: false });
+    await esperarCarregar(aba.id);
+    await dorme(FOLGA_APOS_CARREGAR_EM_MS);
+    return aba.id;
+  } catch {
+    return null;
+  }
+}
+
+let atualizacaoManual = null;
+let chaveDaAtualizacaoManual = null; // id da loja, ou "todas"
+// "so" é o id de uma loja (ou nada, para todas). Um clique igual ao da atualização em andamento
+// (ou qualquer clique durante um "todas") espera por ela em vez de abrir as abas de novo; um
+// pedido diferente entra na fila.
+function atualizarAgora(so = null) {
+  const chave = so ?? "todas";
+  if (atualizacaoManual && (chaveDaAtualizacaoManual === chave || chaveDaAtualizacaoManual === "todas")) {
+    return atualizacaoManual;
+  }
+
+  const anterior = atualizacaoManual ?? Promise.resolve();
+  const atual = anterior
+    .catch(() => {})
+    .then(() => executarAtualizacaoManual(so))
+    .finally(() => {
+      if (atualizacaoManual === atual) {
+        atualizacaoManual = null;
+        chaveDaAtualizacaoManual = null;
+      }
+    });
+  atualizacaoManual = atual;
+  chaveDaAtualizacaoManual = chave;
+  return atual;
+}
+
+// Funções que avisam a espera da Steam de que ela pediu login (mensagem do atualizar.js).
+const esperandoLoginDaSteam = new Set();
+
+// Combina com o gastos.js (que roda na página de histórico da Steam): ele calcula o resumo e o
+// guarda em chrome.storage.local.resumo. Devolve { resultado }, uma promessa que termina com "ok"
+// quando um resumo novo é guardado, "sem-login" se a Steam mandar para a tela de login, ou "erro"
+// se passar do tempo. Precisa ser chamada ANTES de abrir a aba, para não perder o aviso. (Vai
+// dentro de um objeto para o "await" desta função não esperar a promessa terminar.)
+async function prepararEsperaDaSteam() {
+  const { resumo } = await chrome.storage.local.get("resumo");
+  const anterior = resumo?.atualizadoEm ?? null;
+
+  const resultado = new Promise((resolver) => {
+    const terminar = (resultado) => {
+      chrome.storage.onChanged.removeListener(aoMudar);
+      esperandoLoginDaSteam.delete(semLogin);
+      clearTimeout(limite);
+      resolver(resultado);
+    };
+    const aoMudar = (mudancas, area) => {
+      const novo = mudancas.resumo?.newValue?.atualizadoEm;
+      if (area === "local" && novo && novo !== anterior) terminar("ok");
+    };
+    const semLogin = () => terminar("sem-login");
+    const limite = setTimeout(() => terminar("erro"), ESPERA_DA_STEAM_EM_MS);
+    chrome.storage.onChanged.addListener(aoMudar);
+    esperandoLoginDaSteam.add(semLogin);
+  });
+  return { resultado };
+}
+
+async function executarAtualizacaoManual(so) {
+  // O service worker é desligado se ficar uns 30 s sem eventos; esse "pulso" o mantém acordado.
+  const pulso = setInterval(() => chrome.runtime.getPlatformInfo(), 20000);
+  try {
+    // Lojas de fora (com permissão) e lojas de página (Steam) que entram nesta atualização.
+    const externas = [];
+    for (const loja of LOJAS) {
+      if ((so && loja.LOJA.id !== so) || !loja.LOJA.link || !(await temPermissao(loja))) continue;
+      externas.push(loja);
+    }
+    const dePagina = LOJAS_DE_PAGINA.filter((loja) => !so || loja.LOJA.id === so);
+
+    // A espera pela Steam começa antes de abrir as abas.
+    const esperas = new Map();
+    for (const loja of dePagina) esperas.set(loja.LOJA.id, await prepararEsperaDaSteam());
+
+    const abas = new Map(); // id da loja -> id da aba aberta
+    await Promise.all(
+      [...externas, ...dePagina].map(async (loja) => abas.set(loja.LOJA.id, await abrirLojaEmSegundoPlano(loja)))
+    );
+
+    const resultados = new Map(); // id da loja -> "ok" | "sem-login" | "erro"
+    await Promise.all([
+      externas.length > 0 ? sincronizarTodas({ forcar: true, so }) : null,
+      ...dePagina.map(async (loja) => resultados.set(loja.LOJA.id, await esperas.get(loja.LOJA.id).resultado)),
+    ]);
+
+    const { lojas = {} } = await chrome.storage.local.get("lojas");
+    for (const loja of externas) resultados.set(loja.LOJA.id, lojas[loja.LOJA.id]?.status);
+
+    // Fecha as abas; a que ficou sem login fica aberta e vai para a frente, para o usuário entrar.
+    for (const [id, idDaAba] of abas) {
+      if (idDaAba === null) continue;
+      if (resultados.get(id) === "sem-login") chrome.tabs.update(idDaAba, { active: true }).catch(() => {});
+      else chrome.tabs.remove(idDaAba).catch(() => {});
+    }
+  } finally {
+    clearInterval(pulso);
+  }
+}
+
 // Cria o alarme, ou o recria se o período mudou em uma versão nova da extensão.
 async function garantirAlarme() {
   const atual = await chrome.alarms.get(ALARME);
@@ -126,12 +269,18 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.alarms.onAlarm.addListener((alarme) => {
   if (alarme.name === ALARME) sincronizarTodas();
 });
-// Os botões "Atualizar" do popup pedem para buscar agora todas as lojas ou só uma (mensagem.loja).
+// O botão "Atualizar" do popup pede para buscar agora todas as lojas ou só uma (mensagem.loja).
 // Só aceitamos mensagens da própria extensão. Devolvemos true para manter o canal aberto até a
 // resposta (a busca demora).
 chrome.runtime.onMessage.addListener((mensagem, remetente, responder) => {
-  if (remetente.id !== chrome.runtime.id || mensagem?.tipo !== "sincronizar-lojas") return;
-  sincronizarTodas({ forcar: true, so: typeof mensagem.loja === "string" ? mensagem.loja : null }).then(
+  if (remetente.id !== chrome.runtime.id) return;
+  // O atualizar.js (na página de login da Steam) avisa que o usuário não está logado.
+  if (mensagem?.tipo === "steam-sem-login") {
+    esperandoLoginDaSteam.forEach((aviso) => aviso());
+    return;
+  }
+  if (mensagem?.tipo !== "sincronizar-lojas") return;
+  atualizarAgora(typeof mensagem.loja === "string" ? mensagem.loja : null).then(
     () => responder({ ok: true }),
     () => responder({ ok: false })
   );

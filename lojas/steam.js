@@ -9,6 +9,9 @@ export const LOJA = {
   id: "steam",
   nome: "Steam",
   link: { texto: "Abrir histórico de compras", url: "https://store.steampowered.com/account/history/" },
+  // Sem "origem": não pede permissão. O botão "Atualizar" existe mesmo assim, porque o
+  // background.js abre esse link em segundo plano e o gastos.js atualiza o resumo na página.
+  atualizaPelaPagina: true,
 };
 
 export function normalizar(resumo) {
@@ -52,7 +55,7 @@ export function estado({ resumo }) {
     return {
       tipo: "mensagem",
       mensagem:
-        "Ainda não há dados da Steam. Eles são carregados sozinhos quando você navega na loja da Steam (logado na sua conta). Você também pode abrir o histórico de compras para forçar o cálculo.",
+        "Ainda não há dados da Steam. Eles são carregados sozinhos quando você navega na loja da Steam (logado na sua conta). Você também pode clicar em Atualizar (no canto de cima) para carregar agora.",
     };
   }
   if (resumo.idiomaNaoSuportado) {

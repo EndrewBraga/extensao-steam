@@ -23,6 +23,8 @@ Na Steam, a extensão só funciona em páginas de `https://store.steampowered.co
 5. **Compras da PlayStation Store** (opcional, só se você ativar): com você logado, lê o seu histórico de transações em `web.np.playstation.com`, usando a mesma consulta que a página "Histórico de transações" da PlayStation faz (15 transações por vez). Acontece no máximo a cada 6 horas, quando o Chrome abre e assim que você ativa a loja. As recargas da carteira não entram na conta.
 6. **Compras do Xbox / Microsoft** (opcional, só se você ativar): com você logado, lê o seu histórico de pedidos em `account.microsoft.com`, usando a mesma consulta que a página "Histórico do pedido" da conta Microsoft faz (jogos, complementos, Minecraft, Game Pass). Acontece no máximo a cada 6 horas, quando o Chrome abre e assim que você ativa a loja. A resposta da Microsoft inclui endereço, cartão e número do pedido, mas a extensão descarta tudo isso e guarda só nome, valor e data.
 
+Quando você clica em **Atualizar** no popup, a extensão também abre a página da loja em uma aba de fundo (a mesma que você abriria à mão; na Steam, o histórico de compras), espera carregar e fecha a aba. Isso serve só para a loja renovar a sua sessão; a extensão não lê o conteúdo dessa aba.
+
 ## O que é guardado
 
 Somente um **resumo calculado**, no armazenamento local da extensão (`chrome.storage.local`):

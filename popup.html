@@ -7,6 +7,8 @@
   </head>
   <body>
     <h1>Gastos em Jogos</h1>
+    <!-- Fica no canto de cima em todas as abas; o popup.js muda o texto e esconde quando não faz sentido. -->
+    <button id="atualizar" class="botao-pequeno" hidden>Atualizar</button>
 
     <!-- Abas: cada botão mostra o painel de mesmo nome (data-aba="resumo" -> #painel-resumo).
          Só o Resumo (geral) é fixo. Uma aba e um painel por loja são criados pelo popup.js,
@@ -16,7 +18,6 @@
     </nav>
 
     <div id="painel-resumo">
-      <button id="atualizar-todas" class="botao-pequeno" hidden>Atualizar todas as lojas</button>
       <p id="resumo-mensagem" class="mensagem" hidden></p>
 
       <div id="resumo-conteudo" hidden>

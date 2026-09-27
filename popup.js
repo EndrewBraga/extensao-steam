@@ -45,8 +45,11 @@ function montarBarras(linhas) {
     trilho.className = "barra";
     trilho.append(barra);
 
+    const nome = criar("span", rotulo);
+    nome.title = rotulo; // nome completo ao passar o mouse, caso o "…" o corte
+
     const li = document.createElement("li");
-    li.append(criar("span", rotulo), trilho, criar("span", formatarReais(valor)));
+    li.append(nome, trilho, criar("span", formatarReais(valor)));
     return li;
   });
 }
@@ -139,25 +142,17 @@ function criarPainelDaLoja(loja) {
   dados.append(total, cards, lista, atualizado);
   partes.push(dados);
 
-  // Rodapé: link para a página de pedidos da própria loja e, nas lojas externas, o botão que
-  // busca os pedidos de novo agora (some enquanto a loja não foi ativada).
-  const rodape = document.createElement("p");
-  rodape.className = "nota rodape-loja";
+  // Link para a página de pedidos da própria loja.
   if (loja.link) {
     const link = document.createElement("a");
     link.href = loja.link.url;
     link.target = "_blank";
     link.textContent = loja.link.texto;
+    const rodape = document.createElement("p");
+    rodape.className = "nota rodape-loja";
     rodape.append(link);
+    partes.push(rodape);
   }
-  if (loja.origem) {
-    const atualizar = criar("button", "Atualizar", "botao-pequeno");
-    atualizar.dataset.parte = "atualizar";
-    atualizar.dataset.atualizar = "";
-    atualizar.addEventListener("click", () => atualizarLojas(loja.id));
-    rodape.append(atualizar);
-  }
-  partes.push(rodape);
 
   const painel = document.createElement("div");
   painel.id = `painel-${loja.id}`;
@@ -176,34 +171,48 @@ async function ativarLoja(loja) {
   carregar();
 }
 
-// Pede ao background.js para buscar agora: uma loja (id) ou todas (sem id). Enquanto espera,
-// todos os botões de atualizar ficam desligados. Quando os dados novos chegam, o popup se
-// redesenha sozinho (chrome.storage.onChanged); aqui só religamos os botões.
-async function atualizarLojas(id) {
-  const botoes = document.querySelectorAll("[data-atualizar], #atualizar-todas");
-  const textos = [...botoes].map((b) => b.textContent);
-  botoes.forEach((b) => {
-    b.disabled = true;
-    b.textContent = "Atualizando...";
-  });
+// O botão "Atualizar" fica sempre no canto de cima. No Resumo ele atualiza todas as lojas; na
+// aba de uma loja, só ela. Não aparece em lojas que ainda não foram ativadas.
+let estadosDasLojas = new Map(); // id da loja -> { loja, estado }, preenchido em carregar()
+
+// Toda loja tem o botão, menos as externas que ainda não foram ativadas.
+const temBotaoAtualizar = ({ loja, estado }) => (loja.origem || loja.atualizaPelaPagina) && estado.tipo !== "ativar";
+
+function ajustarBotaoAtualizar() {
+  const nomeDaAba = document.querySelector("[role=tab][aria-selected=true]")?.dataset.aba ?? "resumo";
+  const botao = $("#atualizar");
+
+  if (nomeDaAba === "resumo") {
+    botao.hidden = ![...estadosDasLojas.values()].some(temBotaoAtualizar);
+    botao.dataset.loja = "";
+  } else {
+    const e = estadosDasLojas.get(nomeDaAba);
+    botao.hidden = !(e && temBotaoAtualizar(e));
+    botao.dataset.loja = nomeDaAba;
+  }
+  if (!botao.disabled) botao.textContent = nomeDaAba === "resumo" ? "Atualizar todas as lojas" : "Atualizar";
+}
+
+// Pede ao background.js para buscar agora (ele abre a loja em segundo plano, espera, busca e
+// fecha a aba). Enquanto espera, o botão fica desligado. Quando os dados novos chegam, o popup
+// se redesenha sozinho (chrome.storage.onChanged); aqui só religamos o botão.
+async function atualizarLojas() {
+  const botao = $("#atualizar");
+  const id = botao.dataset.loja || undefined;
+  botao.disabled = true;
+  botao.textContent = "Atualizando...";
   try {
     await chrome.runtime.sendMessage({ tipo: "sincronizar-lojas", loja: id });
   } catch {
     // o background não respondeu; o estado de cada loja mostra o que houver
   }
-  botoes.forEach((b, i) => {
-    b.disabled = false;
-    b.textContent = textos[i];
-  });
-  carregar();
+  botao.disabled = false;
+  await carregar();
 }
 
 function mostrarLoja(loja, estado) {
   const painel = $(`#painel-${loja.id}`);
   const parte = (nome) => painel.querySelector(`[data-parte=${nome}]`);
-
-  const atualizar = parte("atualizar");
-  if (atualizar) atualizar.hidden = estado.tipo === "ativar";
 
   const ativar = parte("ativar");
   if (ativar) ativar.hidden = estado.tipo !== "ativar";
@@ -275,6 +284,7 @@ function selecionarAba(nome) {
     aba.setAttribute("aria-selected", String(ativa));
     $(`#painel-${aba.dataset.aba}`).hidden = !ativa;
   });
+  ajustarBotaoAtualizar();
 }
 
 async function carregar() {
@@ -289,15 +299,15 @@ async function carregar() {
     mostrarLoja(LOJA, estado);
     entradas.push({ loja: LOJA, estado });
   }
-  // "Atualizar todas" só faz sentido se alguma loja externa estiver ativada.
-  $("#atualizar-todas").hidden = !entradas.some((e) => e.loja.origem && e.estado.tipo !== "ativar");
+  estadosDasLojas = new Map(entradas.map((e) => [e.loja.id, e]));
+  ajustarBotaoAtualizar();
   mostrarResumoGeral(entradas);
 }
 
 // As abas das lojas são criadas antes do primeiro carregar(). O clique nas abas usa delegação
 // (um único ouvinte no <nav>), que também vale para as abas criadas depois.
 LOJAS.forEach((modulo) => criarPainelDaLoja(modulo.LOJA));
-$("#atualizar-todas").addEventListener("click", () => atualizarLojas());
+$("#atualizar").addEventListener("click", atualizarLojas);
 $(".abas").addEventListener("click", (evento) => {
   const aba = evento.target.closest("[role=tab]");
   if (aba) selecionarAba(aba.dataset.aba);

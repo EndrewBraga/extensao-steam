@@ -18,6 +18,13 @@ const registrarStatus = (texto) => {
 };
 
 async function atualizarEmSegundoPlano() {
+  // Se o botão "Atualizar" abriu o histórico e a Steam mandou para o login, avisa o background.js
+  // (que deixa a aba aberta para o usuário entrar). Fora desse caso o aviso é ignorado.
+  if (location.pathname.startsWith("/login")) {
+    chrome.runtime.sendMessage({ tipo: "steam-sem-login" }).catch(() => {});
+    return;
+  }
+
   // Na página de histórico quem cuida disso é o gastos.js.
   if (location.pathname.startsWith("/account/history")) return;
 

@@ -56,8 +56,12 @@ export function estadoDeLojaExterna(loja, dados, permitido, negada, normalizar) 
   }
 
   const normalizado = normalizar(dados);
-  // Se a última tentativa falhou, os dados mostrados são da última que deu certo.
-  if (dados.status === "sem-login") normalizado.avisos.push("não consegui atualizar agora: você não está logado");
-  else if (dados.status === "erro") normalizado.avisos.push("não consegui atualizar agora");
+  // Se a última tentativa falhou, os dados mostrados são da última que deu certo. Mostramos a
+  // hora da tentativa para o usuário ver que o botão "Atualizar" funcionou e o que fazer.
+  const hora = dados.ultimaTentativa
+    ? " às " + new Date(dados.ultimaTentativa).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : "";
+  if (dados.status === "sem-login") normalizado.avisos.push(`não consegui atualizar${hora}: você não está logado, entre na loja e clique em Atualizar`);
+  else if (dados.status === "erro") normalizado.avisos.push(`não consegui atualizar${hora}`);
   return { tipo: "dados", dados: normalizado };
 }

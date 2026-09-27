@@ -141,28 +141,34 @@ ol {
   list-style: none;
 }
 
-/* Gráficos de barras (por loja e por ano): rótulo | barra | valor. As listas rolam se ficarem grandes. */
+/* Gráficos de barras (por loja e por ano): rótulo | barra | valor. Toda linha tem a mesma altura
+   (o rótulo fica em uma linha só, com "…" se não couber). Só a lista por ano rola, se ficar grande. */
 .barras {
   --rotulo: 34px; /* largura da coluna do rótulo */
 }
 
 .barras.lojas {
-  --rotulo: 64px;
-  max-height: 88px;
-  overflow-y: auto;
+  --rotulo: 108px;
 }
 
 #anos {
-  max-height: 132px;
+  max-height: 112px;
   overflow-y: auto;
 }
 
 .barras li {
   display: grid;
-  grid-template-columns: var(--rotulo) 1fr 78px;
+  grid-template-columns: var(--rotulo) 1fr 86px;
   align-items: center;
   gap: 8px;
-  margin: 3px 0;
+  height: 18px;
+  margin: 2px 0;
+}
+
+.barras li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .barra {
@@ -297,16 +303,10 @@ ol {
 }
 
 /* Fica na linha do título (no canto), para não aumentar a altura do popup. */
-#atualizar-todas {
+#atualizar {
   position: absolute;
   top: 12px;
   right: 14px;
-}
-
-.rodape-loja {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 a {
